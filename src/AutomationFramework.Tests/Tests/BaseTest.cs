@@ -7,10 +7,7 @@ using OpenQA.Selenium;
 
 namespace AutomationFramework.Tests;
 
-/// <summary>
-/// Base fixture for UI tests: spins up Chrome before each test and quits cleanly after.
-/// Inherit from this class for concrete test fixtures (do not add test cases here).
-/// </summary>
+
 [TestFixture]
 public abstract class BaseTest
 {
@@ -18,8 +15,7 @@ public abstract class BaseTest
 
     protected TestSettings Settings { get; private set; } = null!;
 
-    /// <summary>Current Extent test node (Bonus reporting).</summary>
-    protected ExtentTest? Extent { get; private set; }
+        protected ExtentTest? Extent { get; private set; }
 
     [SetUp]
     public virtual void SetUp()

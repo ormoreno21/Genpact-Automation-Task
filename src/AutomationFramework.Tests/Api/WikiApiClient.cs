@@ -5,9 +5,6 @@ using AutomationFramework.Tests.Utils;
 
 namespace AutomationFramework.Tests.Api;
 
-/// <summary>
-/// Minimal English Wikipedia <see href="https://www.mediawiki.org/wiki/API:Parse">Parse API</see> client (HttpClient + JSON).
-/// </summary>
 public sealed class WikiApiClient : ApiClientBase
 {
     public WikiApiClient()
@@ -19,9 +16,7 @@ public sealed class WikiApiClient : ApiClientBase
             "GenpactAutomationFramework/1.0 (NUnit+Selenium educational exercise; +https://en.wikipedia.org/wiki/Wikipedia:User-Agent_policy)");
     }
 
-    /// <summary>
-    /// Resolves the TOC section index by anchor (e.g. <c>Debugging_features</c>), fetches wikitext for that section, and yields comparable plain text.
-    /// </summary>
+    
     public async Task<string> GetSectionPlainTextFromParseApiAsync(
         string pageTitle,
         string sectionAnchor,

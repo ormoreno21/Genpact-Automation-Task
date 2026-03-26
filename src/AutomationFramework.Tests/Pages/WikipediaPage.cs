@@ -4,9 +4,7 @@ using OpenQA.Selenium.Support.UI;
 
 namespace AutomationFramework.Tests.Pages;
 
-/// <summary>
-/// Wikipedia Vector 2022 interactions for the Playwright article and chrome (Appearance / theme).
-/// </summary>
+
 public sealed class WikipediaPage : BasePage
 {
     public const string PlaywrightArticleUrl = "https://en.wikipedia.org/wiki/Playwright_(software)";
@@ -14,10 +12,10 @@ public sealed class WikipediaPage : BasePage
     public const string NextSectionHeadingId = "Reporters";
     public const string MicrosoftDevelopmentToolsHeadingId = "Microsoft_development_tools";
 
-    /// <summary>MediaWiki client preference portlet for Vector "Color (beta)" (night/day/os).</summary>
+   
     public const string SkinThemePortletId = "skin-client-prefs-skin-theme";
 
-    /// <summary>Radio input id for dark / night theme (<c>vector-theme=night</c>).</summary>
+    
     public const string SkinThemeNightInputId = "skin-client-pref-skin-theme-value-night";
 
     public WikipediaPage(IWebDriver driver)
@@ -38,7 +36,7 @@ public sealed class WikipediaPage : BasePage
         wait.Until(d => d.FindElement(By.Id(NextSectionHeadingId)));
     }
 
-    /// <summary>Waits for Vector JS and the Appearance menu's Color (beta) control bundle.</summary>
+   
     public void WaitForVectorAppearanceColorControls(TimeSpan? timeout = null)
     {
         var total = timeout ?? TimeSpan.FromSeconds(50);
@@ -62,7 +60,7 @@ public sealed class WikipediaPage : BasePage
         }
         catch (WebDriverException)
         {
-            // Headless or driver may not support programmatic resize; Chrome --window-size still applies.
+          
         }
 
         wait.Until(d => d.FindElements(By.Id("vector-appearance")).Count > 0);
@@ -83,7 +81,7 @@ public sealed class WikipediaPage : BasePage
             }
             catch (NoSuchElementException)
             {
-                // Appears once Vector mounts the sidebar chrome.
+                
             }
 
             ToggleHeaderAppearanceDropdownIfClosed();
@@ -155,8 +153,7 @@ public sealed class WikipediaPage : BasePage
         ((IJavaScriptExecutor)Driver).ExecuteScript("arguments[0].scrollIntoView({block:'center'});", panel);
     }
 
-    /// <summary>Selects dark mode via the right Appearance sidebar (Color beta → Night).</summary>
-    public void SelectDarkColorThemeFromAppearanceSidebar()
+        public void SelectDarkColorThemeFromAppearanceSidebar()
     {
         WaitForVectorAppearanceColorControls();
         ScrollVectorAppearancePanelIntoView();
@@ -178,27 +175,22 @@ public sealed class WikipediaPage : BasePage
 
     public VectorThemeState ReadVectorThemeState()
     {
-        const string script = """
-            var h = document.documentElement;
-            var cls = h.className || '';
-            var bg = window.getComputedStyle(document.body).backgroundColor || '';
-            return cls + '|||' + bg;
-            """;
+    
+        var htmlElement = Driver.FindElement(By.TagName("html"));
+        var htmlClass = htmlElement.GetAttribute("class") ?? string.Empty;
 
-        var js = (IJavaScriptExecutor)Driver;
-        var raw = js.ExecuteScript(script)?.ToString() ?? "|||";
-        var parts = raw.Split("|||", 2, StringSplitOptions.None);
-        var htmlClass = parts.Length > 0 ? parts[0] : string.Empty;
-        var bodyBg = parts.Length > 1 ? parts[1] : string.Empty;
+     
+        var bodyElement = Driver.FindElement(By.TagName("body"));
+        var bodyBg = bodyElement.GetCssValue("background-color") ?? string.Empty;
+
+     
         var isNight = htmlClass.Contains("skin-theme-clientpref-night", StringComparison.Ordinal);
+
+     
         return new VectorThemeState(htmlClass, bodyBg, isNight);
     }
 
     public sealed record VectorThemeState(string HtmlClass, string BodyBackgroundCss, bool IsNightTheme);
-
-    /// <summary>
-    /// Walks siblings between the Vector heading wrappers to mirror the article subsection body (paragraph + list, excluding the next heading).
-    /// </summary>
     public string GetSectionTextBetweenHeadings(string startHeadingId, string nextHeadingId)
     {
         const string script = """
@@ -226,75 +218,124 @@ public sealed class WikipediaPage : BasePage
 
     public sealed record LinkValidationResult(IReadOnlyList<string> TechnologyNames, IReadOnlyList<string> NonLinkTechnologyNames);
 
-    /// <summary>
-    /// Validates that every listed technology under the "Microsoft development tools" subsection is rendered as a text link (<a href=...>).
-    /// </summary>
+    
     public LinkValidationResult ValidateTechnologyLinksUnderMicrosoftDevelopmentTools()
     {
-        const string script = """
-            function findHeadingElement() {
-              var byId = document.getElementById(arguments[0]);
-              if (byId) return byId;
+        var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(20));
+        var navboxTable = wait.Until(d => FindMicrosoftDevelopmentToolsNavboxTable(d));
+        if (navboxTable is null)
+            throw new NoSuchElementException("Could not find 'Microsoft development tools' navbox table.");
 
-              var normalizedTarget = 'microsoft development tools';
-              var headings = document.querySelectorAll('h2, h3, h4, h5, h6');
-              for (var i = 0; i < headings.length; i++) {
-                var txt = (headings[i].innerText || '').trim().toLowerCase();
-                if (txt === normalizedTarget) return headings[i];
-              }
-              return null;
-            }
+        ExpandMicrosoftNavboxIfCollapsed(navboxTable);
 
-            var startHeading = findHeadingElement();
-            if (!startHeading) {
-              return { technologyNames: [], nonLinkTechnologyNames: ['__SECTION_NOT_FOUND__'] };
-            }
+        var technologyNames = new List<string>();
+        var nonLinkNames = new List<string>();
 
-            var startContainer = startHeading.closest('div.mw-heading') || startHeading;
-            var cursor = startContainer.nextElementSibling;
-            var technologyNames = [];
-            var nonLinkTechnologyNames = [];
-
-            while (cursor) {
-              if (cursor.matches && cursor.matches('div.mw-heading, h2, h3, h4, h5, h6')) break;
-              if (cursor.tagName && cursor.tagName.toLowerCase() === 'ul') {
-                var items = cursor.querySelectorAll(':scope > li');
-                for (var i = 0; i < items.length; i++) {
-                  var li = items[i];
-                  var text = (li.innerText || '').trim();
-                  if (!text) continue;
-                  technologyNames.push(text);
-
-                  var anchor = li.querySelector('a');
-                  var href = anchor ? (anchor.getAttribute('href') || '').trim() : '';
-                  if (!anchor || !href) nonLinkTechnologyNames.push(text);
-                }
-              }
-              cursor = cursor.nextElementSibling;
-            }
-
-            return { technologyNames: technologyNames, nonLinkTechnologyNames: nonLinkTechnologyNames };
-            """;
-
-        var js = (IJavaScriptExecutor)Driver;
-        var raw = js.ExecuteScript(script, MicrosoftDevelopmentToolsHeadingId);
-        if (raw is not Dictionary<string, object?> map)
-            throw new InvalidOperationException("Unexpected JS return payload for technology link validation.");
-
-        static IReadOnlyList<string> ToStringList(object? value)
+        var itemCells = navboxTable.FindElements(By.XPath(".//td[contains(@class,'navbox-list')]"));
+        foreach (var cell in itemCells)
         {
-            if (value is not IEnumerable<object?> items)
-                return Array.Empty<string>();
+            var items = cell.FindElements(By.CssSelector("li"));
+            foreach (var item in items)
+            {
+                var itemText = (item.Text ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(itemText))
+                    continue;
 
-            return items
-                .Select(x => x?.ToString())
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => x!)
-                .ToList();
+                technologyNames.Add(itemText);
+
+                var anchors = item.FindElements(By.CssSelector("a[href]"));
+                var hasValidLink = anchors.Any(a =>
+                {
+                    var href = a.GetAttribute("href");
+                    return !string.IsNullOrWhiteSpace(href);
+                });
+
+                if (!hasValidLink)
+                    nonLinkNames.Add(itemText);
+            }
+
+           
+            var inlineAnchors = cell.FindElements(By.CssSelector("a[href]"));
+            foreach (var anchor in inlineAnchors)
+            {
+                var text = (anchor.Text ?? string.Empty).Trim();
+                if (!string.IsNullOrWhiteSpace(text))
+                    technologyNames.Add(text);
+            }
+
+
+            var hasPlaywrightText = cell.Text.Contains("Playwright", StringComparison.OrdinalIgnoreCase);
+            var hasPlaywrightLink = inlineAnchors.Any(a =>
+                string.Equals((a.Text ?? string.Empty).Trim(), "Playwright", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(a.GetAttribute("href")));
+            if (hasPlaywrightText && !hasPlaywrightLink)
+            {
+                technologyNames.Add("Playwright");
+                nonLinkNames.Add("Playwright");
+            }
+        }
+
+        if (technologyNames.Count == 0)
+        {
+            var anchors = navboxTable.FindElements(By.CssSelector("a[href]"));
+            foreach (var anchor in anchors)
+            {
+                var text = (anchor.Text ?? string.Empty).Trim();
+                if (!string.IsNullOrWhiteSpace(text))
+                    technologyNames.Add(text);
+            }
+
+            var tableText = navboxTable.Text ?? string.Empty;
+            if (tableText.Contains("Playwright", StringComparison.OrdinalIgnoreCase) &&
+                !anchors.Any(a => string.Equals((a.Text ?? string.Empty).Trim(), "Playwright", StringComparison.OrdinalIgnoreCase)))
+            {
+                technologyNames.Add("Playwright");
+                nonLinkNames.Add("Playwright");
+            }
         }
 
         return new LinkValidationResult(
-            ToStringList(map.TryGetValue("technologyNames", out var t) ? t : null),
-            ToStringList(map.TryGetValue("nonLinkTechnologyNames", out var n) ? n : null));
+            technologyNames.Distinct(StringComparer.Ordinal).ToList(),
+            nonLinkNames.Distinct(StringComparer.Ordinal).ToList());
+    }
+
+    private static IWebElement? FindMicrosoftDevelopmentToolsNavboxTable(ISearchContext root)
+    {
+        var heading = root
+            .FindElements(By.XPath("//div[starts-with(@id,'Microsoft_development_tools') and contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'microsoft development tools')]"))
+            .FirstOrDefault();
+        if (heading is null)
+            return null;
+
+        var navboxContainer = heading.FindElements(By.XPath("./ancestor::div[contains(@class,'navbox')][1]")).FirstOrDefault();
+        if (navboxContainer is null)
+            return null;
+
+        var candidateTables = navboxContainer.FindElements(By.XPath(".//table[contains(@class,'navbox-inner')]"));
+        foreach (var table in candidateTables)
+        {
+            var cells = table.FindElements(By.XPath(".//td[contains(@class,'navbox-list')]"));
+            if (cells.Count > 0)
+                return table;
+        }
+
+        return candidateTables.FirstOrDefault();
+    }
+
+    private void ExpandMicrosoftNavboxIfCollapsed(IWebElement navboxTable)
+    {
+        var showButton = navboxTable
+            .FindElements(By.XPath("//*[@id='mw-content-text']/div[2]/div[17]/table/tbody/tr[1]/th/button"))    
+            .FirstOrDefault(a => string.Equals((a.Text ?? string.Empty).Trim(), "show", StringComparison.OrdinalIgnoreCase));
+
+        if (showButton is null)
+            return;
+
+        showButton.Click();
+
+        var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(10));
+        wait.Until(_ =>
+            navboxTable.FindElements(By.XPath("//*[@id='mw-content-text']/div[2]/div[17]/table/tbody/tr[1]/th/button"))
+                .Any(a => string.Equals((a.Text ?? string.Empty).Trim(), "hide", StringComparison.OrdinalIgnoreCase)));
     }
 }

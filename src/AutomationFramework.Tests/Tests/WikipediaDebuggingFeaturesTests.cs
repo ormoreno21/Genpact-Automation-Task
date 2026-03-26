@@ -49,11 +49,6 @@ public sealed class WikipediaDebuggingFeaturesTests : BaseTest
         wikiPage.OpenPlaywrightArticle();
 
         var result = wikiPage.ValidateTechnologyLinksUnderMicrosoftDevelopmentTools();
-        Assert.That(
-            result.NonLinkTechnologyNames,
-            Does.Not.Contain("__SECTION_NOT_FOUND__"),
-            "Could not find 'Microsoft development tools' section on the page.");
-
         Assert.That(result.TechnologyNames, Is.Not.Empty, "No technologies were found under 'Microsoft development tools'.");
         Assert.That(
             result.NonLinkTechnologyNames,

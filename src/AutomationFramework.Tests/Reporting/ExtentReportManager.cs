@@ -4,9 +4,7 @@ using AventStack.ExtentReports.Reporter.Config;
 
 namespace AutomationFramework.Tests.Reporting;
 
-/// <summary>
-/// Single Spark HTML report for the test assembly (ExtentReports 5).
-/// </summary>
+
 public static class ExtentReportManager
 {
     private static readonly object Gate = new();

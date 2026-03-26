@@ -1,8 +1,6 @@
 namespace AutomationFramework.Tests.Api;
 
-/// <summary>
-/// Optional base for HTTP API checks (health, contracts) alongside UI tests.
-/// </summary>
+
 public abstract class ApiClientBase : IDisposable
 {
     protected HttpClient Http { get; }
