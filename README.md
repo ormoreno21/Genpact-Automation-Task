@@ -22,11 +22,13 @@ This repository contains a lightweight, robust UI and API test automation framew
    ```bash
    dotnet test
 
-📊 Viewing the HTML Report (Bonus)
+## 📊 Viewing the HTML Report (Bonus)
+
 After the test execution finishes, a rich HTML report is automatically generated using ExtentReports.
 You can find the index.html report file inside the compilation folder (e.g., bin/Debug/net8.0/Reports/ or similar, depending on your build configuration). Open it in any modern browser to view the detailed results.
 
-⚠️ Important Note Regarding Task 2
+## ⚠️ Important Note Regarding Task 2
+
 Task 2 is expected to FAIL.
 As per the assignment instructions: "validate that all the 'technology names' under this section are a text link, if not please fail the test".
 During the test execution, the framework dynamically expands the "Microsoft development tools" Navbox. It identifies that the word "Playwright" is rendered as plain text (since it represents the current active article) and lacks an <a> tag. Consequently, the test explicitly catches this and fails the assertion, printing the exact non-link item to the report.
