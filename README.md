@@ -25,7 +25,7 @@ This repository contains a lightweight, robust UI and API test automation framew
 ## 📊 Viewing the HTML Report (Bonus)
 
 After the test execution finishes, a rich HTML report is automatically generated using ExtentReports.
-You can find the index.html report file inside the compilation folder (e.g., bin/Debug/net8.0/Reports/ or similar, depending on your build configuration). Open it in any modern browser to view the detailed results.
+You can find the index.html report file inside the compilation folder (bin/Debug/net8.0/TestResults/ ). Open it in any modern browser to view the detailed results.
 
 ## ⚠️ Important Note Regarding Task 2
 
